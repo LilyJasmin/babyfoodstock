@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fffaf4">
+<title>離乳食ストック</title>
+<style>
+:root{--bg:#fffaf4;--card:#fff;--text:#3d342d;--muted:#8b8178;--line:#eadfd4;--accent:#8b6f5a;--empty:#f5eee7;--shadow:0 2px 10px rgba(70,50,30,.06)}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;-webkit-tap-highlight-color:transparent} button,input{font:inherit} button{cursor:pointer}
+header{position:sticky;top:0;z-index:5;background:rgba(255,250,244,.94);backdrop-filter:blur(10px);padding:18px 16px 12px;border-bottom:1px solid rgba(234,223,212,.8)}
+.header-row{display:flex;align-items:center;justify-content:space-between;max-width:720px;margin:auto} h1{font-size:22px;margin:0;font-weight:800}.sub{font-size:12px;color:var(--muted);margin-top:4px}.count{font-size:12px;background:#f1e8df;border-radius:999px;padding:7px 10px}
+main{max-width:720px;margin:0 auto;padding:16px 14px 100px}.group{margin:18px 0 26px}.group-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.group-title h2{font-size:16px;margin:0}.group-title span{font-size:12px;color:var(--muted)}
+.container{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;margin-bottom:12px;box-shadow:var(--shadow)}.container-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.container-name{font-weight:800}.container-status{font-size:12px;color:var(--muted)}
+.slots{display:grid;gap:7px}.slots.one{grid-template-columns:repeat(4,1fr)}.slots.six{grid-template-columns:repeat(3,1fr)}.slots.eight{grid-template-columns:repeat(4,1fr)}
+.slot{min-height:68px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;transition:.15s}.slot:active{transform:scale(.97)}.slot.empty{background:var(--empty);color:#b2a69b}.emoji{font-size:26px;line-height:1.05}.food{font-size:11px;font-weight:700;margin-top:3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.slot-num{position:absolute;top:3px;left:5px;font-size:9px;color:#aa9d92}.date{font-size:9px;color:var(--muted);margin-top:2px}.summary{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.chip{font-size:11px;background:#f7f0ea;padding:5px 8px;border-radius:999px}.empty-chip{color:var(--muted)}
+.fab{position:fixed;right:18px;bottom:20px;border:0;background:var(--accent);color:white;border-radius:999px;padding:14px 18px;font-weight:800;box-shadow:0 8px 24px rgba(80,55,35,.22)}
+.overlay{position:fixed;inset:0;background:rgba(35,25,18,.38);z-index:20;display:none;align-items:flex-end}.overlay.open{display:flex}.sheet{background:var(--bg);width:100%;max-height:88vh;border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));overflow:auto}.sheet-inner{max-width:720px;margin:auto}.sheet-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.sheet h3{margin:0;font-size:19px}.close{border:0;background:#eee5dc;border-radius:50%;width:34px;height:34px}.detail-card{background:white;border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}.big-emoji{text-align:center;font-size:48px}.detail-name{text-align:center;font-size:20px;font-weight:800;margin:5px 0}.detail-meta{text-align:center;color:var(--muted);font-size:13px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.primary,.secondary,.danger{border:0;border-radius:12px;padding:13px;font-weight:800}.primary{background:var(--accent);color:#fff}.secondary{background:#eee5dc;color:var(--text)}.danger{background:#f4dddd;color:#8d4848}.full{grid-column:1/-1}
+label{display:block;font-size:13px;font-weight:700;margin:13px 0 7px}input{width:100%;border:1px solid var(--line);background:white;border-radius:11px;padding:12px;color:var(--text)}.food-options{display:flex;flex-wrap:wrap;gap:7px}.food-option{border:1px solid var(--line);background:white;border-radius:999px;padding:8px 11px;font-size:12px}.food-option.active{outline:2px solid var(--accent)}.form-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.note{font-size:11px;color:var(--muted);line-height:1.6;margin-top:12px}.empty-all{text-align:center;color:var(--muted);padding:50px 10px}
+@media(min-width:600px){main{padding-top:22px}.overlay{align-items:center}.sheet{max-width:560px;border-radius:22px;margin:auto;max-height:85vh}}
+</style>
+</head>
+<body>
+<header><div class="header-row"><div><h1>離乳食ストック</h1><div class="sub">入れ物から中身を確認</div></div><div class="count" id="count"></div></div></header>
+<main id="app"></main>
+<button class="fab" onclick="openAdd()">＋ 入れ物に入れる</button>
+<div class="overlay" id="overlay" onclick="backdrop(event)"><div class="sheet"><div class="sheet-inner" id="sheet"></div></div></div>
+<script>
+const KEY='baby-food-stock-v1';
+const types=[{id:'50x1',label:'50ml × 1',sets:8,size:1},{id:'25x8',label:'25ml × 8',sets:2,size:8},{id:'50x6',label:'50ml × 6',sets:2,size:6}];
+const foods={
+ 'にんじん':'🥕','かぼちゃ':'🎃','10倍がゆ':'🍚','ブロッコリー':'🥦','さつまいも':'🍠','ほうれん草':'🥬','その他':'🍴'
+};
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||seed()}catch(e){return seed()}}
+function seed(){const d={containers:[]};types.forEach(t=>{for(let s=1;s<=t.sets;s++){d.containers.push({id:`${t.id}-${s}`,type:t.id,set:s,slots:Array.from({length:t.size},()=>null)})}});d.containers[0].slots[0]={food:'にんじん',date:today()};d.containers[1].slots[0]={food:'10倍がゆ',date:today()};d.containers[2].slots.splice(0,4,...['にんじん','にんじん','かぼちゃ','かぼちゃ'].map(food=>({food,date:today()})));save(d);return d}
+let data=load();
+function save(x){localStorage.setItem(KEY,JSON.stringify(x))}
+function today(){return new Date().toISOString().slice(0,10)}
+function fmt(d){if(!d)return'';const [y,m,day]=d.split('-');return `${Number(m)}/${Number(day)}`}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(){let filled=0,total=0;let html='';types.forEach(t=>{html+=`<section class="group"><div class="group-title"><h2>${t.label}</h2><span>${t.sets}セット</span></div>`;data.containers.filter(c=>c.type===t.id).forEach(c=>{const n=c.slots.filter(Boolean).length;filled+=n;total+=c.slots.length;html+=`<div class="container"><div class="container-head"><div class="container-name">${t.label}　${c.set}セット目</div><div class="container-status">${n}/${c.slots.length} 入</div></div><div class="slots ${t.size===1?'one':t.size===6?'six':'eight'}">`;c.slots.forEach((slot,i)=>{html+=slot?`<button class="slot" onclick="openSlot('${c.id}',${i})"><span class="slot-num">${i+1}</span><span class="emoji">${foods[slot.food]||foods['その他']}</span><span class="food">${esc(slot.food)}</span><span class="date">${fmt(slot.date)}</span></button>`:`<button class="slot empty" onclick="openSlot('${c.id}',${i})"><span class="slot-num">${i+1}</span><span class="emoji">＋</span><span class="food">空き</span></button>`});html+='</div><div class="summary">';const map={};c.slots.filter(Boolean).forEach(x=>map[x.food]=(map[x.food]||0)+1);Object.entries(map).forEach(([f,n])=>html+=`<span class="chip">${foods[f]||'🍴'} ${esc(f)} ${n}</span>`);if(n<c.slots.length)html+=`<span class="chip empty-chip">空き ${c.slots.length-n}</span>`;html+='</div></div>'});html+='</section>'});document.getElementById('app').innerHTML=html;document.getElementById('count').textContent=`使用中 ${filled} / ${total}`}
+function show(html){document.getElementById('sheet').innerHTML=html;document.getElementById('overlay').classList.add('open')}
+function closeSheet(){document.getElementById('overlay').classList.remove('open')}
+function backdrop(e){if(e.target.id==='overlay')closeSheet()}
+function openSlot(cid,i){const c=data.containers.find(x=>x.id===cid),slot=c.slots[i],t=types.find(x=>x.id===c.type);if(!slot){openAdd(cid,i);return}show(`<div class="sheet-top"><h3>${t.label} ${c.set}セット目・${i+1}番</h3><button class="close" onclick="closeSheet()">×</button></div><div class="detail-card"><div class="big-emoji">${foods[slot.food]||'🍴'}</div><div class="detail-name">${esc(slot.food)}</div><div class="detail-meta">${t.label}　／　作成日 ${fmt(slot.date)}</div><div class="actions"><button class="primary" onclick="useSlot('${cid}',${i})">使った</button><button class="secondary" onclick="editSlot('${cid}',${i})">編集</button></div></div>`)}
+function useSlot(cid,i){data.containers.find(x=>x.id===cid).slots[i]=null;save(data);closeSheet();render()}
+function openAdd(cid=null,i=null){let c=cid?data.containers.find(x=>x.id===cid):null;const available=data.containers.flatMap(c=>c.slots.map((s,i)=>s?null:{c,i})).filter(Boolean);show(`<div class="sheet-top"><h3>${cid?'このマスに入れる':'入れ物に入れる'}</h3><button class="close" onclick="closeSheet()">×</button></div><label>入れ物</label><select id="containerSelect" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;background:white" onchange="refreshSlots()">${(cid?[{c,i}]:available).map(({c,i})=>`<option value="${c.id}|${i}" ${c.id===cid&&i===Number(i)?'selected':''}>${types.find(t=>t.id===c.type).label} ${c.set}セット目・${i+1}番</option>`).join('')}</select><label>中身</label><div class="food-options">${Object.keys(foods).map(f=>`<button class="food-option" onclick="pickFood(this,'${f}')">${foods[f]} ${f}</button>`).join('')}</div><input type="hidden" id="foodInput"><label>作った日</label><input type="date" id="dateInput" value="${today()}"><div class="form-actions"><button class="secondary" onclick="closeSheet()">キャンセル</button><button class="primary" onclick="saveSlot()">保存</button></div><div class="note">このプロトタイプでは、入れ物・マス単位で管理します。同じケース内に違う料理・違う作成日のストックも入れられます。</div>`);if(cid){const sel=document.getElementById('containerSelect');sel.value=`${cid}|${i}`}}
+function refreshSlots(){}
+function pickFood(el,f){document.querySelectorAll('.food-option').forEach(x=>x.classList.remove('active'));el.classList.add('active');document.getElementById('foodInput').value=f}
+function saveSlot(){const v=document.getElementById('containerSelect').value;if(!v)return;const [cid,is]=v.split('|'),i=Number(is),food=document.getElementById('foodInput').value,date=document.getElementById('dateInput').value;if(!food){alert('中身を選んでください');return}data.containers.find(c=>c.id===cid).slots[i]={food,date};save(data);closeSheet();render()}
+function editSlot(cid,i){const slot=data.containers.find(c=>c.id===cid).slots[i];openAdd(cid,i);setTimeout(()=>{document.getElementById('dateInput').value=slot.date;pickFood([...document.querySelectorAll('.food-option')].find(x=>x.textContent.includes(slot.food)),slot.food)},0)}
+render();
+</script>
+</body>
+</html>
